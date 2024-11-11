@@ -42,8 +42,7 @@ class TransactionDetailsExtractor:
             menu_items={
                 'Get Help': 'https://github.com/AlbinAimleap/financial_data_analyzer',
                 'Report a bug': "https://www.example.com/bug",
-                'About': "# Financial Document Analyzer\nVersion 1.0",
-                'developer': 'albin.a@aimleap.com'
+                'About': "# Financial Document Analyzer\nVersion 1.0"
             }
         )
         self._setup_sidebar()
