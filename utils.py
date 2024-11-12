@@ -18,10 +18,11 @@ class PDFConfig:
     embedding_model: str = "text-embedding-3-large"
 
 class PDFProcessor:
-    def __init__(self, api_key: str = None):
+    def __init__(self, api_key: str = None) -> None:
         self.config = PDFConfig()
         self.set_api_key(api_key)
         self.key_present = False
+        self.qa_chains = {}
         
     def set_api_key(self, api_key: str) -> None:
         if api_key:
@@ -57,23 +58,24 @@ class PDFProcessor:
         )
         return ConversationalRetrievalChain.from_llm(
             llm=llm,
-            retriever=vector_store.as_retriever(search_kwargs={"k": 3}),
-            return_source_documents=True
+            chain_type="stuff",
+            retriever=vector_store.as_retriever(search_kwargs={"k": 4}),
+            memory=None
         )
-
     def process_pdf(self, pdf_file) -> Tuple[ConversationalRetrievalChain, List]:
         text = self._parse_pdf(pdf_file)
         chunks = self._create_text_chunks(text)
         vector_store = self._create_vector_store(chunks)
         qa_chain = self._create_qa_chain(vector_store)
-        return qa_chain, chunks
+        return qa_chain
 
-    def extract_transaction_details(self, qa_chain, chat_history=None) -> str:
+    def extract_transaction_details(self, pdf_file, chat_history=None) -> str:
+        qa_chain = self.process_pdf(pdf_file)
         query = """
         Extract all transaction records from the provided document. For each transaction, return a list of RFC8259-compliant JSON objects containing the following fields:
 
         Name_of_the_custodian: The financial institution holding the account
-        Name_of_account: The specific account owner name
+        Name_of_account: The Nickname of the account
         Account_number: The full account identifier
         Date_of_statement: The statement period in YYYY/MM/DD to YYYY/MM/DD format
         Unrealized_Gain_Loss_Total: The total unrealized gain/loss amount

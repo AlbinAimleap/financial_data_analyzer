@@ -125,47 +125,43 @@ class TransactionDetailsExtractor:
                 else:
                     st.warning("No transaction details found in the document.")
                 
-                # Add a button to rerun the page
+            # Add a button to rerun the page
             if st.button("🔄 Clear"):
                 self.rerun_page()
     
     async def _process_uploaded_files_async(self, uploaded_pdfs: List) -> List[tuple]:
-        cols = st.columns(len(uploaded_pdfs))
-        tasks = []
+        results = []
         
         with st.spinner("🔍 Analyzing documents..."):
-            with concurrent.futures.ThreadPoolExecutor() as executor:
-                loop = asyncio.get_event_loop()
-                for idx, pdf in enumerate(uploaded_pdfs):
-                    with cols[idx]:
+            with st.empty():
+                for pdf in uploaded_pdfs:
+                    with concurrent.futures.ThreadPoolExecutor() as executor:
+                        loop = asyncio.get_event_loop()
                         task = loop.run_in_executor(
                                 executor,
                                 self._process_document,
                                 pdf
                             )
-                        tasks.append((task, pdf.name))
-                
-                results = []
-                for task, filename in tasks:
-                    summary, transactional_df = await task
-                    results.append((summary, transactional_df, filename))
-                
-                st.success("✅ All documents processed successfully!")
-                return results
-    
+                        summary, transactional_df = await task
+                        results.append((summary, transactional_df, pdf.name))
+                        success = st.success(f"✅ Processed {pdf.name} successfully!")
+            
+            success.empty()
+            st.success("✅ All documents processed successfully!")
+            return results    
+        
     def _process_document(self, pdf_file) -> tuple:
         with st.spinner("⚙️ Processing document..."):
-            self.qa_chain, self.chunks = self.processor.process_pdf(pdf_file)
-        summary, transactional_df = self._extract_and_display_details(pdf_file)
+            transactions = self.processor.extract_transaction_details(pdf_file)
+            transactions = transactions.replace("```json", "").replace("```", "")
+        summary, transactional_df = self._extract_and_display_details(transactions)
         st.success(f"✅ Processed {pdf_file.name} successfully!")
         return summary, transactional_df
     
-    def _extract_and_display_details(self, pdf_file) -> tuple:
+    def _extract_and_display_details(self, transactions) -> tuple:
         with st.spinner("🔍 Extracting transaction details..."):            
             # Extract transaction details
-            transactions = self.processor.extract_transaction_details(self.qa_chain)
             
-            transactions = transactions.replace("```json", "").replace("```", "")
             transactions_data = json.loads(transactions)
       
             transactions_df = pd.DataFrame(transactions_data if len(transactions_data) > 1 else [])
@@ -266,7 +262,7 @@ class TransactionDetailsExtractor:
         st.download_button(
             "📥 Download Analysis",
             csv,
-            file_name=f"{file_name}_{datetime.now().strftime('%Y%m%d')}.csv",
+            file_name=f"{file_name.split(".")[0]}_{datetime.now().strftime('%Y%m%d')}.csv",
             mime="text/csv",
             key=unique_key,
             help="Download the analysis results as a CSV file",
