@@ -7,7 +7,6 @@ from dataclasses import dataclass
 from datetime import datetime
 import asyncio
 import concurrent.futures
-import time
 
 @dataclass
 class TransactionSummary:
