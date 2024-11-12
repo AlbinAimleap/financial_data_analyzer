@@ -80,7 +80,7 @@ class PDFProcessor:
         Date_of_statement: The statement period in YYYY/MM/DD to YYYY/MM/DD format
         Unrealized_Gain_Loss_Total: The total unrealized gain/loss amount
         Equity_Name: The full legal name of the security
-        Ticker: The trading symbol
+        Ticker: The trading symbol of the security, It can be a stock, bond, or other security
         ISIN: The International Securities Identification Number
         Price: The current market price per share/unit
         Quantity: The number of shares/units held

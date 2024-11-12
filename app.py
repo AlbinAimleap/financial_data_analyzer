@@ -262,7 +262,7 @@ class TransactionDetailsExtractor:
         st.download_button(
             "📥 Download Analysis",
             csv,
-            file_name=f"{file_name.split(".")[0]}_{datetime.now().strftime('%Y%m%d')}.csv",
+            file_name=f"{file_name.split('.')[0]}_{datetime.now().strftime('%Y%m%d')}.csv",
             mime="text/csv",
             key=unique_key,
             help="Download the analysis results as a CSV file",
