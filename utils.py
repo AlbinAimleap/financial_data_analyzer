@@ -5,7 +5,6 @@ from langchain_community.vectorstores import FAISS
 from langchain_community.chat_models.openai import ChatOpenAI
 from langchain.chains.conversational_retrieval.base import ConversationalRetrievalChain
 import os
-from bs4 import BeautifulSoup
 from pathlib import Path
 from typing import Tuple, List
 from dataclasses import dataclass
