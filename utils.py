@@ -22,6 +22,7 @@ class PDFConfig:
     embedding_ctx_length: int = 10000
     temperature: float = 0.7
     score_threshold: float = 0.3
+    verbose: bool = False
     kval: int = 20
     model_name: str = "gpt-4o-mini-2024-07-18"
     embedding_model: str = "text-embedding-3-large"
@@ -75,7 +76,7 @@ class PDFProcessor:
                     "fetch_k": self.config.kval * 2, 
                     "score_threshold": self.config.score_threshold
                     }),
-            verbose=True
+            verbose=self.config.verbose
         )
         
     def process_pdf(self, pdf_file) -> ConversationalRetrievalChain:

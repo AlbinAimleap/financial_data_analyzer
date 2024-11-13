@@ -80,7 +80,7 @@ class TransactionDetailsExtractor:
         if not self.api_key:
             st.warning("⚠️ Please provide your OpenAI API key to continue.", icon="⚠️")
             self.api_key = self._get_api_key()
-            return False
+            print(f"API Key: {self.api_key}")
         self.processor = PDFProcessor(self.api_key)
         return True
     
@@ -163,23 +163,17 @@ class TransactionDetailsExtractor:
     
     def _extract_and_display_details(self, transactions) -> tuple:
         with st.spinner("🔍 Extracting transaction details..."):            
-            # Extract transaction details
-            
             transactions_data = json.loads(transactions)
-      
             transactions_df = pd.DataFrame(transactions_data if len(transactions_data) > 1 else [])
-            
-            # Extract summary from first element
             if transactions:
                 summary_data = transactions_data[0]
             else:
                 summary_data = {}
             
-            # Create transaction summary object
             summary = TransactionSummary(
-                custodian=summary_data.get("Name_of_the_custodian"),
-                account_name=summary_data.get("Name_of_account"),
-                account_number=summary_data.get("Account_number"),
+                custodian=summary_data.get("Custodian_Name"),
+                account_name=summary_data.get("Account_Name"),
+                account_number=summary_data.get("Account_Number"),
                 statement_period=summary_data.get("Date_of_statement"),
                 total_unrealized_gain_loss=summary_data.get("Unrealized_Gain_Loss_Total"),
             )
