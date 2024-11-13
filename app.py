@@ -1,4 +1,5 @@
 import streamlit as st
+import os
 import pandas as pd
 from utils import PDFProcessor
 import json
@@ -21,6 +22,7 @@ class TransactionDetailsExtractor:
         self.qa_chain = None
         self.chunks = None
         self.processor = None
+        self.api_key = None
         self._setup_page_config()
         self._initialize_session_state()
     
@@ -51,11 +53,11 @@ class TransactionDetailsExtractor:
         with st.sidebar:
             st.image("https://media.designrush.com/agencies/323733/conversions/AIMLEAP-logo-profile.jpg", caption="Financial Analyzer")
             st.title("Document Analysis Tools")
-            st.markdown("""
+            st.markdown(f"""
             <div style='background-color: #f0f2f6; padding: 20px; border-radius: 10px;'>
             <h2>Getting Started</h2>
             <ol>
-                <li>🔑 Enter your OpenAI API key</li>
+                <li>🔑 {'Enter your OpenAI API key' if not self.api_key else 'Found OpenAI API key from Environtment'}</li>
                 <li>📁 Upload PDF documents</li>
                 <li>⚙️ Process and analyze</li>
                 <li>📊 View detailed results</li>
@@ -74,11 +76,12 @@ class TransactionDetailsExtractor:
         self._handle_file_upload()
     
     def _initialize_processor(self) -> bool:
-        api_key = self._get_api_key()
-        if not api_key:
+        # self.api_key = os.getenv("OPENAI_API_KEY")
+        if not self.api_key:
             st.warning("⚠️ Please provide your OpenAI API key to continue.", icon="⚠️")
+            self.api_key = self._get_api_key()
             return False
-        self.processor = PDFProcessor(api_key)
+        self.processor = PDFProcessor(self.api_key)
         return True
     
     def _get_api_key(self) -> str:
@@ -167,7 +170,10 @@ class TransactionDetailsExtractor:
             transactions_df = pd.DataFrame(transactions_data if len(transactions_data) > 1 else [])
             
             # Extract summary from first element
-            summary_data = transactions_data[1] if transactions_data else {}
+            if transactions:
+                summary_data = transactions_data[0]
+            else:
+                summary_data = {}
             
             # Create transaction summary object
             summary = TransactionSummary(
@@ -212,7 +218,9 @@ class TransactionDetailsExtractor:
         </style>
         """, unsafe_allow_html=True)
         
-        from_, to_ = summary.statement_period.split("to")
+        from_, to_ = "", ""
+        if summary.statement_period:
+            from_, to_ = summary.statement_period.split("to")
         
         with st.container():
             cols = st.columns(6)

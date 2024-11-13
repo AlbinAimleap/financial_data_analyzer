@@ -5,15 +5,24 @@ from langchain_community.vectorstores import FAISS
 from langchain_community.chat_models.openai import ChatOpenAI
 from langchain.chains.conversational_retrieval.base import ConversationalRetrievalChain
 import os
+from bs4 import BeautifulSoup
 from pathlib import Path
 from typing import Tuple, List
 from dataclasses import dataclass
 
+def load_prompt() -> str:
+    cur_dir = Path(__file__).parent
+    with open(cur_dir / "prompt.txt", "r", encoding='utf-8') as f:
+        return f.read().strip()
+
 @dataclass
 class PDFConfig:
-    chunk_size: int = 4000
-    chunk_overlap: int = 50
-    temperature: float = 0.5
+    chunk_size: int = 8000
+    chunk_overlap: int = 100 
+    embedding_ctx_length: int = 10000
+    temperature: float = 0.7
+    score_threshold: float = 0.3
+    kval: int = 20
     model_name: str = "gpt-4o-mini-2024-07-18"
     embedding_model: str = "text-embedding-3-large"
 
@@ -47,7 +56,8 @@ class PDFProcessor:
     def _create_vector_store(self, chunks: List) -> FAISS:
         embeddings = OpenAIEmbeddings(
             model=self.config.embedding_model, 
-            chunk_size=self.config.chunk_size
+            chunk_size=self.config.chunk_size,
+            embedding_ctx_length=self.config.embedding_ctx_length
         )
         return FAISS.from_documents(chunks, embeddings)
     
@@ -58,11 +68,17 @@ class PDFProcessor:
         )
         return ConversationalRetrievalChain.from_llm(
             llm=llm,
-            chain_type="stuff",
-            retriever=vector_store.as_retriever(search_kwargs={"k": 4}),
-            memory=None
+            retriever=vector_store.as_retriever(
+                search_type="mmr", 
+                search_kwargs={
+                    "k": self.config.kval, 
+                    "fetch_k": self.config.kval * 2, 
+                    "score_threshold": self.config.score_threshold
+                    }),
+            verbose=True
         )
-    def process_pdf(self, pdf_file) -> Tuple[ConversationalRetrievalChain, List]:
+        
+    def process_pdf(self, pdf_file) -> ConversationalRetrievalChain:
         text = self._parse_pdf(pdf_file)
         chunks = self._create_text_chunks(text)
         vector_store = self._create_vector_store(chunks)
@@ -71,25 +87,7 @@ class PDFProcessor:
 
     def extract_transaction_details(self, pdf_file, chat_history=None) -> str:
         qa_chain = self.process_pdf(pdf_file)
-        query = """
-        Extract all transaction records from the provided document. For each transaction, return a list of RFC8259-compliant JSON objects containing the following fields:
-
-        Name_of_the_custodian: The financial institution holding the account
-        Name_of_account: The Nickname of the account
-        Account_number: The full account identifier
-        Date_of_statement: The statement period in YYYY/MM/DD to YYYY/MM/DD format
-        Unrealized_Gain_Loss_Total: The total unrealized gain/loss amount
-        Equity_Name: The full legal name of the security
-        Ticker: The trading symbol of the security, It can be a stock, bond, or other security
-        ISIN: The International Securities Identification Number
-        Price: The current market price per share/unit
-        Quantity: The number of shares/units held
-        Value: The total market value
-        Original_Cost: The initial purchase cost
-        Unrealized_Gain_Loss: The individual unrealized gain/loss
-
-        Return as JSON array with no additional text.
-        """
+        query = load_prompt()
         chat_history = chat_history or []
         result = qa_chain.invoke({"question": query, "chat_history": chat_history})
         return result["answer"]

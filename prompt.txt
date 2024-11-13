@@ -1,0 +1,50 @@
+Extract all transaction records from the provided document, targeting entries with unrealized gain/loss information. Return a list of RFC8259-compliant JSON objects for each transaction containing the fields below.
+
+Statement Information:
+- **Date_of_statement:** The statement coverage period in strict YYYY/MM/DD to YYYY/MM/DD format.
+- **Unrealized_Gain_Loss_Total:** The total unrealized gain/loss across all positions for the statement period, validated against individual positions.
+
+Security Details:
+- **Equity_Name:** The registered legal name of the security (e.g., “Fidelity Government Money Market”).
+- **Ticker:** Trading symbol, accommodating stocks, bonds, or other securities (e.g., "SPAXX", "172967PC9").
+- **ISIN:** The 12-character International Securities Identification Number if available.
+- **Price:** The market price per share/unit in the statement currency as of the statement’s end date.
+- **Quantity:** The number of shares/units held to 4 decimal places.
+- **Value:** The total market value calculated as Price × Quantity, rounded to 2 decimal places.
+- **Original_Cost:** The initial purchase cost per security.
+- **Unrealized_Gain_Loss:** The unrealized gain/loss for each position.
+
+Validation Requirements:
+- **Monetary Values:** Round all monetary fields to 2 decimal places.
+- **Dates:** Format all dates in YYYY/MM/DD.
+- **Account Numbers:** Provide complete, unmasked account numbers.
+- **ISIN Codes:** Ensure ISIN codes are correctly formatted and validated by checksum.
+- **Unrealized Gain/Loss Totals:** Confirm that aggregate totals reconcile with individual position calculations.
+- **Empty/Null Values:** Use `""` for any fields without available data.
+
+Processing Instructions:
+1. **Scan Document:** Identify sections containing unrealized gain/loss information across various formats (e.g., Fidelity, JPMorgan, Charles Schwab).
+2. **Extract Data:** Retrieve and validate all required fields, normalizing each entry to the specified format.
+3. **Cross-Check Calculations:** Perform mathematical checks on market value, cost basis, and unrealized gain/loss.
+4. **Standardize Format:** Format values according to the specified field requirements.
+5. **Output Structure:** Organize data as a valid JSON array.
+
+Final Output:
+Each JSON object must contain:
+- **Custodian_Name:** The financial institution managing the account (e.g., “Fidelity”).
+- **Account_Name:** Nickname or title of the account.
+- **Account_Number:** The full account identifier.
+- **Date_of_statement:** The statement coverage period in YYYY/MM/DD to YYYY/MM/DD format.
+- **Unrealized_Gain_Loss_Total:** Total unrealized gain/loss for all securities.
+- **Equity_Name:** Full legal name of the security.
+- **Ticker:** Trading symbol (accommodates stocks, bonds, etc.).
+- **ISIN:** ISIN for the security, if provided.
+- **Price:** Market price per share/unit.
+- **Quantity:** Number of shares/units held.
+- **Value:** Calculated market value.
+- **Original_Cost:** Purchase cost basis.
+- **Unrealized_Gain_Loss:** Unrealized gain/loss per position.
+
+Output Requirement:
+Return only a properly formatted JSON array, with each JSON object meeting all specifications for validation, formatting, and completeness. No additional text or commentary should be included.
+
