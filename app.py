@@ -76,12 +76,11 @@ class TransactionDetailsExtractor:
         self._handle_file_upload()
     
     def _initialize_processor(self) -> bool:
-        # self.api_key = os.getenv("OPENAI_API_KEY")
-        if not self.api_key:
+        api_key = self._get_api_key()
+        if not api_key:
             st.warning("⚠️ Please provide your OpenAI API key to continue.", icon="⚠️")
-            self.api_key = self._get_api_key()
-            return self._initialize_processor()
-        self.processor = PDFProcessor(self.api_key)
+            return False
+        self.processor = PDFProcessor(api_key)
         return True
     
     def _get_api_key(self) -> str:
