@@ -80,7 +80,7 @@ class TransactionDetailsExtractor:
         if not self.api_key:
             st.warning("⚠️ Please provide your OpenAI API key to continue.", icon="⚠️")
             self.api_key = self._get_api_key()
-            print(f"API Key: {self.api_key}")
+            return False
         self.processor = PDFProcessor(self.api_key)
         return True
     
